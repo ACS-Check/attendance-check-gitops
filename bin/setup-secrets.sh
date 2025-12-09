@@ -49,6 +49,17 @@ PASSWORD=$(aws ecr get-login-password --region "$AWS_REGION")
 # ECR 주소
 ECR_REPO="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
+# AWS Credentials 미리 가져오기
+echo "AWS 자격증명 가져오는 중..."
+AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id)
+AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key)
+
+if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+    echo "오류: AWS 자격증명을 가져올 수 없습니다." >&2
+    echo "aws configure를 먼저 실행하세요." >&2
+    exit 1
+fi
+
 # 네임스페이스 생성 (없을 경우)
 for NAMESPACE in cc-frontend cc-backend; do
     if ! kubectl get namespace "$NAMESPACE" >/dev/null 2>&1; then
@@ -58,35 +69,41 @@ for NAMESPACE in cc-frontend cc-backend; do
 done
 
 # 양쪽 네임스페이스에 모두 시크릿 생성
-echo "ECR Secret 생성 중 (cc-frontend, cc-backend)..."
+echo ""
+echo "시크릿 생성 중 (cc-frontend, cc-backend)..."
+echo ""
 
 for NAMESPACE in cc-frontend cc-backend; do
-    echo "  - $NAMESPACE 네임스페이스..."
+    echo "[$NAMESPACE] 시크릿 생성 중..."
     
     # ECR Secret
-    kubectl delete secret ecr-secret -n "$NAMESPACE" --ignore-not-found=true
+    echo "  1. ecr-secret..."
+    kubectl delete secret ecr-secret -n "$NAMESPACE" --ignore-not-found=true 2>/dev/null
     kubectl create secret docker-registry ecr-secret \
        -n "$NAMESPACE" \
        --docker-server="$ECR_REPO" \
        --docker-username=AWS \
        --docker-password="$PASSWORD"
+    echo "     ✅ 생성 완료"
     
     # ConfigMap
+    echo "  2. ecr-config..."
+    kubectl delete configmap ecr-config -n "$NAMESPACE" --ignore-not-found=true 2>/dev/null
     kubectl create configmap ecr-config \
       --from-literal=AWS_ACCOUNT_ID="$AWS_ACCOUNT_ID" \
       --from-literal=AWS_REGION="$AWS_REGION" \
-      -n "$NAMESPACE" \
-      --dry-run=client -o yaml | kubectl apply -f -
+      -n "$NAMESPACE"
+    echo "     ✅ 생성 완료"
     
     # AWS Credentials Secret
-    AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id)
-    AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key)
-    
+    echo "  3. aws-credentials..."
+    kubectl delete secret aws-credentials -n "$NAMESPACE" --ignore-not-found=true 2>/dev/null
     kubectl create secret generic aws-credentials \
       --from-literal=access-key-id="$AWS_ACCESS_KEY_ID" \
       --from-literal=secret-access-key="$AWS_SECRET_ACCESS_KEY" \
-      -n "$NAMESPACE" \
-      --dry-run=client -o yaml | kubectl apply -f -
+      -n "$NAMESPACE"
+    echo "     ✅ 생성 완료"
+    echo ""
 done
 
 echo ""
