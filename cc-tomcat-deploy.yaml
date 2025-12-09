@@ -48,7 +48,7 @@ spec:
 
       containers:
         - name: check-tomcat
-          image: 119994407504.dkr.ecr.ap-northeast-2.amazonaws.com/check-tomcat:20251209160136-bf5fe28
+          image: 119994407504.dkr.ecr.ap-northeast-2.amazonaws.com/check-tomcat:20251209185021-c24784c
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
