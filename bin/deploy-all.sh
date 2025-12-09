@@ -4,6 +4,11 @@ echo "====================================="
 echo "Deploying all Kubernetes resources..."
 echo "====================================="
 
+# Create namespaces
+echo "Creating namespaces..."
+kubectl get namespace cc-frontend >/dev/null 2>&1 || kubectl create namespace cc-frontend
+kubectl get namespace cc-backend >/dev/null 2>&1 || kubectl create namespace cc-backend
+
 # Apply ConfigMap
 echo "Applying ConfigMap..."
 kubectl apply -f cc-nginx-conf.yaml

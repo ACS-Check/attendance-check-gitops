@@ -27,6 +27,11 @@ kubectl delete -f cc-tomcat-deploy.yaml --ignore-not-found=true
 echo "Deleting ConfigMap..."
 kubectl delete -f cc-nginx-conf.yaml --ignore-not-found=true
 
+# Delete Namespaces
+echo "Deleting Namespaces..."
+kubectl delete namespace cc-frontend --ignore-not-found=true
+kubectl delete namespace cc-backend --ignore-not-found=true
+
 echo "====================================="
 echo "All resources deleted successfully!"
 echo "====================================="

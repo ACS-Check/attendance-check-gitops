@@ -50,46 +50,51 @@ PASSWORD=$(aws ecr get-login-password --region "$AWS_REGION")
 ECR_REPO="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
 # 네임스페이스 생성 (없을 경우)
-NAMESPACE="default"
-if ! kubectl get namespace "$NAMESPACE" >/dev/null 2>&1; then
-    echo "네임스페이스 '$NAMESPACE' 생성 중..."
-    kubectl create namespace "$NAMESPACE"
-fi
+for NAMESPACE in cc-frontend cc-backend; do
+    if ! kubectl get namespace "$NAMESPACE" >/dev/null 2>&1; then
+        echo "네임스페이스 '$NAMESPACE' 생성 중..."
+        kubectl create namespace "$NAMESPACE"
+    fi
+done
 
-# 기존 ecr-secret 삭제 후 재생성
-echo "ECR Secret 생성 중..."
-kubectl delete secret ecr-secret -n "$NAMESPACE" --ignore-not-found=true
-kubectl create secret docker-registry ecr-secret \
-   -n "$NAMESPACE" \
-   --docker-server="$ECR_REPO" \
-   --docker-username=AWS \
-   --docker-password="$PASSWORD"
+# 양쪽 네임스페이스에 모두 시크릿 생성
+echo "ECR Secret 생성 중 (cc-frontend, cc-backend)..."
 
-# ConfigMap 생성 (CronJob용)
-echo "ConfigMap 생성 중..."
-kubectl create configmap ecr-config \
-  --from-literal=AWS_ACCOUNT_ID="$AWS_ACCOUNT_ID" \
-  --from-literal=AWS_REGION="$AWS_REGION" \
-  -n "$NAMESPACE" \
-  --dry-run=client -o yaml | kubectl apply -f -
-
-# AWS credentials secret 생성 (CronJob용)
-echo "AWS Credentials Secret 생성 중..."
-AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id)
-AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key)
-
-kubectl create secret generic aws-credentials \
-  --from-literal=access-key-id="$AWS_ACCESS_KEY_ID" \
-  --from-literal=secret-access-key="$AWS_SECRET_ACCESS_KEY" \
-  -n "$NAMESPACE" \
-  --dry-run=client -o yaml | kubectl apply -f -
+for NAMESPACE in cc-frontend cc-backend; do
+    echo "  - $NAMESPACE 네임스페이스..."
+    
+    # ECR Secret
+    kubectl delete secret ecr-secret -n "$NAMESPACE" --ignore-not-found=true
+    kubectl create secret docker-registry ecr-secret \
+       -n "$NAMESPACE" \
+       --docker-server="$ECR_REPO" \
+       --docker-username=AWS \
+       --docker-password="$PASSWORD"
+    
+    # ConfigMap
+    kubectl create configmap ecr-config \
+      --from-literal=AWS_ACCOUNT_ID="$AWS_ACCOUNT_ID" \
+      --from-literal=AWS_REGION="$AWS_REGION" \
+      -n "$NAMESPACE" \
+      --dry-run=client -o yaml | kubectl apply -f -
+    
+    # AWS Credentials Secret
+    AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id)
+    AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key)
+    
+    kubectl create secret generic aws-credentials \
+      --from-literal=access-key-id="$AWS_ACCESS_KEY_ID" \
+      --from-literal=secret-access-key="$AWS_SECRET_ACCESS_KEY" \
+      -n "$NAMESPACE" \
+      --dry-run=client -o yaml | kubectl apply -f -
+done
 
 echo ""
 echo "====================================="
 echo "✅ ECR Secret 생성 완료!"
 echo "====================================="
 echo ""
-echo "생성된 리소스:"
+echo "생성된 리소스 (cc-frontend, cc-backend 양쪽):"
 echo "- Secret: ecr-secret (Docker registry 인증)"
 echo "- Secret: aws-credentials (AWS CLI 인증)"
 echo "- ConfigMap: ecr-config (AWS 정보)"
