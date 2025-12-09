@@ -32,6 +32,10 @@ kubectl apply -f cc-tomcat-hpa.yaml
 echo "Applying Ingress..."
 kubectl apply -f cc-ingress.yaml
 
+# Apply ECR Secret CronJob
+echo "Applying ECR Secret CronJob..."
+kubectl apply -f ecr-secret-cronjob.yaml
+
 echo "====================================="
 echo "All resources deployed successfully!"
 echo "====================================="

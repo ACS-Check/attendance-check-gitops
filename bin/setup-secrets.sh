@@ -79,28 +79,36 @@ echo ""
 for NAMESPACE in cc-frontend cc-backend; do
     echo "[$NAMESPACE] 시크릿 생성 중..."
     
-    # ECR Secret
-    echo "  1. ecr-secret..."
-    kubectl delete secret ecr-secret -n "$NAMESPACE" --ignore-not-found=true 2>/dev/null
-    kubectl create secret docker-registry ecr-secret \
-       -n "$NAMESPACE" \
+    # ECR Secret 삭제
+    echo "  1. ecr-secret 삭제 중..."
+    kubectl delete secret ecr-secret -n "$NAMESPACE" --ignore-not-found=true
+    
+    # ECR Secret 생성
+    echo "  2. ecr-secret 생성 중..."
+    kubectl create secret docker-registry -n "$NAMESPACE" ecr-secret \
        --docker-server="$ECR_REPO" \
        --docker-username=AWS \
        --docker-password="$PASSWORD"
     echo "     ✅ 생성 완료"
     
-    # ConfigMap
-    echo "  2. ecr-config..."
-    kubectl delete configmap ecr-config -n "$NAMESPACE" --ignore-not-found=true 2>/dev/null
+    # ConfigMap 삭제
+    echo "  3. ecr-config 삭제 중..."
+    kubectl delete configmap ecr-config -n "$NAMESPACE" --ignore-not-found=true
+    
+    # ConfigMap 생성
+    echo "  4. ecr-config 생성 중..."
     kubectl create configmap ecr-config \
       --from-literal=AWS_ACCOUNT_ID="$AWS_ACCOUNT_ID" \
       --from-literal=AWS_REGION="$AWS_REGION" \
       -n "$NAMESPACE"
     echo "     ✅ 생성 완료"
     
-    # AWS Credentials Secret
-    echo "  3. aws-credentials..."
-    kubectl delete secret aws-credentials -n "$NAMESPACE" --ignore-not-found=true 2>/dev/null
+    # AWS Credentials Secret 삭제
+    echo "  5. aws-credentials 삭제 중..."
+    kubectl delete secret aws-credentials -n "$NAMESPACE" --ignore-not-found=true
+    
+    # AWS Credentials Secret 생성
+    echo "  6. aws-credentials 생성 중..."
     kubectl create secret generic aws-credentials \
       --from-literal=access-key-id="$AWS_ACCESS_KEY_ID" \
       --from-literal=secret-access-key="$AWS_SECRET_ACCESS_KEY" \

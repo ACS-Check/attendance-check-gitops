@@ -8,6 +8,10 @@ echo "====================================="
 echo "Deleting Ingress..."
 kubectl delete -f cc-ingress.yaml --ignore-not-found=true
 
+# Delete ECR Secret CronJob
+echo "Deleting ECR Secret CronJob..."
+kubectl delete -f ecr-secret-cronjob.yaml --ignore-not-found=true
+
 # Delete HPA
 echo "Deleting HPA..."
 kubectl delete -f cc-nginx-hpa.yaml --ignore-not-found=true
