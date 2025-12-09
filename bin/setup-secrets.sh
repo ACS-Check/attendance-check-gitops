@@ -11,35 +11,38 @@ if ! command -v aws >/dev/null 2>&1; then
   exit 1
 fi
 
-# AWS 설정 입력
-read -p "AWS Region (default: ap-northeast-2): " AWS_REGION
-AWS_REGION=${AWS_REGION:-ap-northeast-2}
-
-read -p "AWS Account ID (12자리): " AWS_ACCOUNT_ID
-
-echo ""
-echo "입력한 정보:"
-echo "- Region: $AWS_REGION"
-echo "- Account ID: $AWS_ACCOUNT_ID"
-echo ""
-
 # AWS 자격증명 확인
 echo "AWS 자격증명 확인 중..."
-if ! aws sts get-caller-identity --region "$AWS_REGION" >/dev/null 2>&1; then
+if ! aws sts get-caller-identity >/dev/null 2>&1; then
   echo "오류: AWS 자격증명이 유효하지 않습니다." >&2
   echo "다음 명령어로 AWS CLI를 설정하세요:" >&2
   echo "  aws configure" >&2
   exit 1
 fi
 
+# 실제 Account ID 가져오기
+ACTUAL_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+ACTUAL_REGION=$(aws configure get region)
+ACTUAL_REGION=${ACTUAL_REGION:-ap-northeast-2}
+
 echo "✅ AWS 자격증명 확인 완료"
 echo ""
-read -p "계속 진행하시겠습니까? (y/n): " CONFIRM
+echo "현재 AWS 설정:"
+echo "- Account ID: $ACTUAL_ACCOUNT_ID"
+echo "- Region: $ACTUAL_REGION"
+echo ""
+
+# 사용자에게 확인
+read -p "이 설정으로 진행하시겠습니까? (y/n): " CONFIRM
 
 if [ "$CONFIRM" != "y" ]; then
     echo "취소되었습니다."
     exit 0
 fi
+
+# 변수 설정
+AWS_ACCOUNT_ID="$ACTUAL_ACCOUNT_ID"
+AWS_REGION="$ACTUAL_REGION"
 
 # ECR 로그인 패스워드 가져오기
 echo ""
