@@ -85,7 +85,7 @@ for NAMESPACE in cc-frontend cc-backend; do
     
     # ECR Secret 생성
     echo "  2. ecr-secret 생성 중..."
-    kubectl create secret docker-registry -n "$NAMESPACE" ecr-secret \
+    kubectl create secret docker-registry -n "$NAMESPACE" ecr-regcred \
        --docker-server="$ECR_REPO" \
        --docker-username=AWS \
        --docker-password="$PASSWORD"
