@@ -70,6 +70,35 @@ spec:
               value: "attendance"     # 실제 만든 유저명
             - name: DB_PASS
               value: "1234"
+          
+          # Startup Probe: 초기 시작 시간 충분히 확보 (최대 150초)
+          startupProbe:
+            tcpSocket:
+              port: 8080              # TCP 연결만 체크 (HTTP 요청 안함)
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 30      # 15 + (5 * 30) = 최대 165초 대기
+            successThreshold: 1
+          
+          # Readiness Probe: 트래픽 받을 준비 확인
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 45    # 시작 후 45초 대기 (충분한 여유)
+            periodSeconds: 10          # 10초마다 체크 (자주 체크 안함)
+            timeoutSeconds: 5          # 5초 timeout
+            failureThreshold: 6        # 6번 실패해야 NotReady (60초 여유)
+            successThreshold: 2        # 2번 연속 성공해야 Ready (확실히 살아있을 때만)
+          
+          # Liveness Probe: Pod 재시작 여부 판단
+          livenessProbe:
+            tcpSocket:
+              port: 8080              # TCP 연결만 체크 (더 관대함)
+            initialDelaySeconds: 90    # 시작 후 90초 대기
+            periodSeconds: 15          # 15초마다 체크
+            timeoutSeconds: 5          # 5초 timeout
+            failureThreshold: 10       # 10번 실패 시 재시작 (150초 여유)
 
 
 
