@@ -52,7 +52,7 @@ spec:
 
       containers:
         - name: check-nginx
-          image: 119994407504.dkr.ecr.ap-northeast-2.amazonaws.com/check-nginx:20251210063811-fe7f52d
+          image: 119994407504.dkr.ecr.ap-northeast-2.amazonaws.com/check-nginx:20251210064758-d01dd9e
           imagePullPolicy: Always
           ports:
             - containerPort: 80
