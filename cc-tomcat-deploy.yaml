@@ -71,21 +71,6 @@ spec:
             - name: DB_PASS
               value: "1234"
 
-          # "/" 기본 페이지 헬스 체크
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 8080
-            initialDelaySeconds: 70
-            periodSeconds: 35
-
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 8080
-            initialDelaySeconds: 70
-            periodSeconds: 35
-
 
 
 
